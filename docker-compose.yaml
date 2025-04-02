@@ -1,0 +1,17 @@
+# Set global environments and status
+#   global:
+#     image: busybox
+#     command: ["tail", "-f", "/dev/null"]
+#     environment:
+#       NODE_ENV: production
+#       UID: "${UID}"
+#       GID: "${GID}"
+#     restart: always
+#     networks:
+#       - traefik-network
+#     labels:
+#       - "traefik.enable=false"      
+
+networks:
+  traefik-network:
+    external: false

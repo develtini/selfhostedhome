@@ -1,0 +1,49 @@
+# Reference: https://doc.traefik.io/traefik/routing/providers/docker/
+api:
+  insecure: true
+
+ping: 
+  entryPoint: internal
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+entryPoints:
+  web:
+    address: ":80"
+
+  websecure:
+    address: ":443"
+
+  webcloudflare:
+    address: ":8443"    
+
+  internal:
+    address: ":9000"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: "docker_traefik-network"
+    watch: true
+  file:
+    directory: "/etc/traefik/dynamic/"
+    watch: true
+
+log:
+  level: "DEBUG"
+
+accessLog:
+  filePath: "/var/log/traefik/access.log"
+  bufferingSize: 0
+
+certificatesResolvers:
+  letsencrypt-cloudflare:
+    acme:
+      email: dnsacme@republicverin55.org
+      storage: /etc/traefik/acme/acme.json
+      dnsChallenge:
+        provider: cloudflare
+        delayBeforeCheck: 10

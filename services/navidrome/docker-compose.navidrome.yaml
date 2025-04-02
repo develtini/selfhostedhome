@@ -1,0 +1,36 @@
+services:
+  navidrome:
+    container_name: navidrome
+    image: deluan/navidrome:latest    
+    ports:
+      - "4533:${PORT:-4533}"
+    env_file:
+      - ./services/navidrome/.env
+    labels:
+      - "traefik.enable=true"
+      # Router para Cloudflare (WAN)
+      - "traefik.http.routers.navidrome-cloudflare.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.navidrome-cloudflare.entrypoints=webcloudflare"
+      - "traefik.http.routers.navidrome-cloudflare.tls=true"
+      - "traefik.http.routers.navidrome-cloudflare.tls.options=cloudflare@file"    
+      - "traefik.http.routers.navidrome-cloudflare.service=navidrome-cloudflare-service"
+      - "traefik.http.services.navidrome-cloudflare-service.loadbalancer.server.port=${PORT:-4533}"
+
+      # Router para LAN (Let's Encrypt)
+      - "traefik.http.routers.navidrome-lan.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.navidrome-lan.entrypoints=websecure"
+      - "traefik.http.routers.navidrome-lan.tls=true"
+      - "traefik.http.routers.navidrome-lan.tls.certresolver=letsencrypt-cloudflare"
+      - "traefik.http.routers.navidrome-lan.service=navidrome-lan-service"
+      - "traefik.http.services.navidrome-lan-service.loadbalancer.server.port=${PORT:-4533}"
+
+    volumes:
+      - navidrome_data:/data
+      - "${MUSIC_DIR}:/music:ro"
+    networks:
+      - traefik-network
+    restart: unless-stopped
+
+volumes:
+  navidrome_data:
+    external: false

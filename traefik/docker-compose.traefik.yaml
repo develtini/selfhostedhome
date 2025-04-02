@@ -1,0 +1,25 @@
+services:
+  traefik:
+    image: traefik:v3.3
+    container_name: traefik
+    env_file:
+      - ./traefik/.env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8443:8443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./traefik/certificates:/etc/traefik/certs:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - ./traefik/acme:/etc/traefik/acme
+
+    networks:
+      - traefik-network
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
