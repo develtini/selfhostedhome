@@ -13,6 +13,7 @@ services:
       - "traefik.http.routers.navidrome-cloudflare.entrypoints=webcloudflare"
       - "traefik.http.routers.navidrome-cloudflare.tls=true"
       - "traefik.http.routers.navidrome-cloudflare.tls.options=cloudflare@file"    
+      - "traefik.http.routers.navidrome-cloudflare.middlewares=cloudflare-headers@file"
       - "traefik.http.routers.navidrome-cloudflare.service=navidrome-cloudflare-service"
       - "traefik.http.services.navidrome-cloudflare-service.loadbalancer.server.port=${PORT:-4533}"
 

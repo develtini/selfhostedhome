@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://json.schemastore.org/traefik-v3.json
+# Dynamic configuration for Traefik
+http:
+  middlewares:
+    cloudflare-headers:
+      plugin:
+        htransformation:
+          Rules:
+            - Name: "Clean X-Real-Ip"
+              Header: "X-Real-Ip"
+              Value: ""
+              Type: "Set"
+            - Name: "Set X-Real-Ip"
+              Header: "X-Real-Ip"
+              HeaderPrefix: "^"
+              Sep: ","
+              Values:
+                - "^CF-Connecting-IP"
+              Type: "Join"

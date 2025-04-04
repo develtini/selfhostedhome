@@ -1,8 +1,9 @@
-# Reference: https://doc.traefik.io/traefik/routing/providers/docker/
+# yaml-language-server: $schema=https://json.schemastore.org/traefik-v3.json
+# Static configuration for Traefik
 api:
   insecure: true
 
-ping: 
+ping:
   entryPoint: internal
 
 global:
@@ -17,8 +18,28 @@ entryPoints:
     address: ":443"
 
   webcloudflare:
-    address: ":8443"    
-
+    address: ":8443"
+    forwardedHeaders:
+      trustedIPs:
+        # Cloudflared Tunnel make a local connection to Traefik
+        - "0.0.0.0/0"
+        # If you want to use directly Cloudflare IPs, uncomment the following lines
+        # https://www.cloudflare.com/ips-v4/#
+        # - "173.245.48.0/20"
+        # - "103.21.244.0/22"
+        # - "103.22.200.0/22"
+        # - "103.31.4.0/22"
+        # - "141.101.64.0/18"
+        # - "108.162.192.0/18"
+        # - "190.93.240.0/20"
+        # - "188.114.96.0/20"
+        # - "197.234.240.0/22"
+        # - "198.41.128.0/17"
+        # - "162.158.0.0/15"
+        # - "104.16.0.0/13"
+        # - "104.24.0.0/14"
+        # - "172.64.0.0/13"
+        # - "131.0.72.0/22"
   internal:
     address: ":9000"
 
@@ -36,9 +57,23 @@ log:
   level: "DEBUG"
 
 accessLog:
-  filePath: "/var/log/traefik/access.log"
-  bufferingSize: 0
+  filePath: "/var/log/traefik/access.log"  
+  bufferingSize: 20
+  # More details about the access log format
+  # format: json
+  # fields:
+  #   defaultMode: keep
+  #   headers:
+  #     defaultMode: drop # set to keep to include all headers
+  #     names:
+  #       X-Forwarded-For: keep
+  #       X-Forwarded-Proto: keep
+  #       X-Forwarded-Port: keep
+  #       X-Forwarded-Host: keep
+  #       X-Real-IP: keep
+  #       CF-Connecting-IP: keep
 
+# Certificates resolvers (via DNS challenge with API Cloudflare)
 certificatesResolvers:
   letsencrypt-cloudflare:
     acme:
@@ -46,4 +81,12 @@ certificatesResolvers:
       storage: /etc/traefik/acme/acme.json
       dnsChallenge:
         provider: cloudflare
-        delayBeforeCheck: 10
+        propagation:
+          delayBeforeChecks: 10s
+
+experimental:
+  plugins:
+    # Allow to transform the request and response headers (based in other values)
+    htransformation:
+      moduleName: "github.com/tomMoulard/htransformation"
+      version: "v0.3.3"
