@@ -1,0 +1,8 @@
+https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/multi.txt
+https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+https://raw.githubusercontent.com/AdAway/adaway.github.io/master/hosts.txt
+https://v.firebog.net/hosts/Easylist.txt
+https://v.firebog.net/hosts/Prigent-Ads.txt
+https://v.firebog.net/hosts/Prigent-Malware.txt
+https://raw.githubusercontent.com/PolishFiltersTeam/KADhosts/master/KADhosts.txt
+https://raw.githubusercontent.com/jdlingyu/ad-wars/master/hosts

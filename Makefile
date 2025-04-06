@@ -4,7 +4,7 @@ ENV_COMMON=--env-file .env --env-file ./traefik/.env --env-file ./pihole/.env
 ACTIVE_SERVICES=$(shell grep ^ACTIVE_SERVICES .env | cut -d '=' -f2 | sed 's/,$$//' | sed 's/,/ /g')
 
 
-.PHONY: help start start-base start-all-services start-service stop restart default list help
+.PHONY: help list start start-base start-all-services start-service stop stop-base stop-all-services stop-service restart logs logs-base logs-all-services logs-traefik logs-traefik-access logs-pihole logs-pihole-dns logs-navidrome logs-service shell-traefik shell-pihole cmd-pihole-localdns cmd-pihole-adlists cmd-pihole-adlists-clean
 
 
 help: ## Show help for each of the Makefile recipes.
@@ -123,3 +123,8 @@ shell-pihole:
 cmd-pihole-localdns:
 	docker compose --env-file .env --env-file ./pihole/.env -f docker-compose.yaml -f ./pihole/docker-compose.pihole.yaml exec -u root pihole sh -c "/bin/sh /etc/custom.d/01-static-entries/update-static-records.sh"
 
+cmd-pihole-adlists:
+	docker compose --env-file .env --env-file ./pihole/.env -f docker-compose.yaml -f ./pihole/docker-compose.pihole.yaml exec -u root pihole sh -c "/bin/sh /etc/custom.d/02-adlists/add-adlists.sh"
+
+cmd-pihole-adlists-clean:
+	docker compose --env-file .env --env-file ./pihole/.env -f docker-compose.yaml -f ./pihole/docker-compose.pihole.yaml exec -u root pihole sh -c "/bin/sh /etc/custom.d/02-adlists/clean-adlists.sh"

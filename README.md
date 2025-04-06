@@ -16,7 +16,8 @@ This system uses Traefik as the entry point with:
 | Service | Image | Purpose |
 |---------|-------|---------|
 | Traefik | `traefik:3.3` | Reverse proxy and certificate management |
-| Navidrome | `navidrome:latest` | Web-based music collection server and streamer
+| Navidrome | `navidrome:latest` | Web-based music collection server and streamer |
+| Pihole | `pihole:latest` |  DNS sinkhole |
 ## Requirements
 
 - Docker
@@ -41,18 +42,66 @@ This system uses Traefik as the entry point with:
    make start
    ```
 
-## Usage
+## 🚀 Makefile Usage
 
-### Makefile Commands
+This project provides a robust `Makefile` to manage various Docker services such as **Traefik**, **Pihole**, and other active services configured through an `.env` file. The available commands are designed to simplify service management, logging, and interaction.
 
-| Command | Description |
-|---------|-------------|
-| `make start` | Start all services |
-| `make stop` | Stop all services |
-| `make restart` | Restart all services |
-| `make logs` | View container logs |
-| `make list` | List active services |
+### 📋 Service Management
+
+| Command                    | Description                                                 |
+|----------------------------|-------------------------------------------------------------|
+| `make start`               | Start all services (Traefik, Pihole, and active services).  |
+| `make start-base`          | Start only common services (Traefik and Pihole).            |
+| `make start-all-services`  | Start all active services defined in `.env`.                |
+| `make start-service`       | Start a specific service (`SERVICE=<service_name>`).        |
+| `make stop`                | Stop all services (Traefik, Pihole, and active services).   |
+| `make stop-base`           | Stop only common services (Traefik and Pihole).             |
+| `make stop-all-services`   | Stop all active services.                                    |
+| `make stop-service`        | Stop a specific service (`SERVICE=<service_name>`).         |
+| `make restart`             | Restart all services.                                       |
+
+---
+
+### 📋 Logs Management
+
+| Command                     | Description                                             |
+|-----------------------------|---------------------------------------------------------|
+| `make logs`                 | Show logs for all services.                            |
+| `make logs-base`            | Show logs for Traefik and Pihole.                      |
+| `make logs-all-services`    | Show logs for all active services.                     |
+| `make logs-service`         | Show logs for a specific service (`SERVICE=<service_name>`). |
+| `make logs-traefik`         | Show logs for Traefik.                                  |
+| `make logs-pihole`          | Show logs for Pihole.                                   |
+| `make logs-pihole-dns`      | Show DNS logs for Pihole.                               |
+| `make logs-traefik-access`  | Show Traefik access logs.                               |
+
+---
+
+### 📋 Service Interaction
+
+| Command                      | Description                             |
+|------------------------------|-----------------------------------------|
+| `make shell-traefik`         | Open a shell in the Traefik container. |
+| `make shell-pihole`          | Open a shell in the Pihole container.  |
+| `make cmd-pihole-localdns`   | Update Pihole DNS entries.             |
+| `make cmd-pihole-adlists`    | Add Pihole adlists.                    |
+| `make cmd-pihole-adlists-clean`| Clean Pihole adlists.                |
+
+---
+
+### 📋 Utility Commands
+
+| Command      | Description                                     |
+|--------------|-------------------------------------------------|
+| `make help`  | Display help information for all commands.      |
+| `make list`  | List all active services configured in `.env`.  |
+
+
 
 ## License
 
 This project is private and not licensed for public use. All rights reserved.
+
+## References Block Lists:
+
+[https://github.com/hagezi/dns-blocklists](https://github.com/hagezi/dns-blocklists)
