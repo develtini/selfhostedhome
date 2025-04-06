@@ -1,0 +1,32 @@
+services:
+  jellyfin:
+    container_name: jellyfin
+    image: jellyfin/jellyfin:latest
+    env_file:
+      - ./services/jellyfin/.env
+    group_add:
+      - ${RENDER_GROUP_ID:-122}
+    labels:
+      - "traefik.enable=true"    
+      # Router para LAN (Let's Encrypt)
+      - "traefik.http.routers.jellyfin-lan.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.jellyfin-lan.entrypoints=websecure"
+      - "traefik.http.routers.jellyfin-lan.tls=true"
+      - "traefik.http.routers.jellyfin-lan.tls.certresolver=letsencrypt-cloudflare"
+      - "traefik.http.routers.jellyfin-lan.service=jellyfin-lan-service"
+      - "traefik.http.services.jellyfin-lan-service.loadbalancer.server.port=${PORT:-8096}"
+    volumes:
+      - jellyfin_config:/config
+      - jellyfin_cache:/cache
+      - ${MEDIA_DIR}:/media
+    networks:
+      - traefik-network        
+    restart: unless-stopped
+    devices:
+      - ${RENDER_PATH:-/dev/dri/renderD128}:/dev/dri/renderD128
+
+volumes:
+  jellyfin_config:
+    external: false
+  jellyfin_cache:
+    external: false

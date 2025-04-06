@@ -4,7 +4,7 @@ ENV_COMMON=--env-file .env --env-file ./traefik/.env --env-file ./pihole/.env
 ACTIVE_SERVICES=$(shell grep ^ACTIVE_SERVICES .env | cut -d '=' -f2 | sed 's/,$$//' | sed 's/,/ /g')
 
 
-.PHONY: help list start start-base start-all-services start-service stop stop-base stop-all-services stop-service restart logs logs-base logs-all-services logs-traefik logs-traefik-access logs-pihole logs-pihole-dns logs-navidrome logs-service shell-traefik shell-pihole cmd-pihole-localdns cmd-pihole-adlists cmd-pihole-adlists-clean
+.PHONY: help list start start-base start-all-services start-service stop stop-base stop-all-services stop-service restart logs logs-base logs-all-services logs-traefik logs-traefik-access logs-pihole logs-pihole-dns logs-navidrome logs-jellyfin logs-service shell-traefik shell-pihole shell-jellyfin cmd-pihole-localdns cmd-pihole-adlists cmd-pihole-adlists-clean cmd-jellyfin-checkhw
 
 
 help: ## Show help for each of the Makefile recipes.
@@ -104,6 +104,10 @@ logs-navidrome: ## View logs of Navidrome
 	@echo "Showing logs for Navidrome..."
 	docker compose --env-file .env --env-file=./services/navidrome/.env -f docker-compose.yaml -f ./services/navidrome/docker-compose.navidrome.yaml logs -f
 
+logs-jellyfin: ## View logs of Jellyfin
+	@echo "Showing logs for Jellyfin..."
+	docker compose --env-file .env --env-file=./services/jellyfin/.env -f docker-compose.yaml -f ./services/jellyfin/docker-compose.jellyfin.yaml logs -f
+
 logs-service: ## View logs of a specific service (make logs-service SERVICE=service_name)
 	@echo "Showing logs for $(SERVICE)..."
 	docker compose --env-file .env -f docker-compose.yaml -f $(SERVICES_DIR)/$(SERVICE)/docker-compose.$(SERVICE).yaml logs -f
@@ -112,19 +116,28 @@ logs-service: ## View logs of a specific service (make logs-service SERVICE=serv
 ## Shell Commands ##
 
 
-shell-traefik:
+shell-traefik: ## Open a shell in the Traefik container
 	docker compose --env-file .env --env-file ./traefik/.env -f docker-compose.yaml -f ./traefik/docker-compose.traefik.yaml exec -it traefik /bin/sh
 
-shell-pihole:
+shell-pihole: ## Open a shell in the Pihole container
 	docker compose --env-file .env --env-file ./pihole/.env -f docker-compose.yaml -f ./pihole/docker-compose.pihole.yaml exec -it pihole /bin/bash
+
+shell-jellyfin: ## Open a shell in the Jellyfin container
+	docker compose --env-file .env --env-file ./services/jellyfin/.env -f docker-compose.yaml -f ./services/jellyfin/docker-compose.jellyfin.yaml exec -it jellyfin /bin/bash
 
 ## Service Commands ##
 
-cmd-pihole-localdns:
+cmd-pihole-localdns: ## Update local DNS records
 	docker compose --env-file .env --env-file ./pihole/.env -f docker-compose.yaml -f ./pihole/docker-compose.pihole.yaml exec -u root pihole sh -c "/bin/sh /etc/custom.d/01-static-entries/update-static-records.sh"
 
-cmd-pihole-adlists:
+cmd-pihole-adlists: ## Update adlists
 	docker compose --env-file .env --env-file ./pihole/.env -f docker-compose.yaml -f ./pihole/docker-compose.pihole.yaml exec -u root pihole sh -c "/bin/sh /etc/custom.d/02-adlists/add-adlists.sh"
 
-cmd-pihole-adlists-clean:
+cmd-pihole-adlists-clean: ## Disable adlists
 	docker compose --env-file .env --env-file ./pihole/.env -f docker-compose.yaml -f ./pihole/docker-compose.pihole.yaml exec -u root pihole sh -c "/bin/sh /etc/custom.d/02-adlists/clean-adlists.sh"
+
+cmd-jellyfin-checkhw: ## Check hardware acceleration
+	@echo "Checking QSV and VA-API for Jellyfin..."
+	docker compose --env-file .env --env-file ./services/jellyfin/.env -f docker-compose.yaml -f ./services/jellyfin/docker-compose.jellyfin.yaml exec -it jellyfin /bin/bash -c "/usr/lib/jellyfin-ffmpeg/vainfo"
+	@echo "Checking OpenCL for Jellyfin..."
+	docker compose --env-file .env --env-file ./services/jellyfin/.env -f docker-compose.yaml -f ./services/jellyfin/docker-compose.jellyfin.yaml exec -it jellyfin /bin/bash -c "/usr/lib/jellyfin-ffmpeg/ffmpeg -v verbose -init_hw_device vaapi=va -init_hw_device opencl@va"

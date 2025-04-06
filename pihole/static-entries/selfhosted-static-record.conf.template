@@ -1,3 +1,4 @@
 # Static entries with services that are self-hosted
 address=/navidrome.$PROXY_DOMAIN/$PROXY_IP
 address=/pihole.$PROXY_DOMAIN/$PROXY_IP
+address=/jellyfin.$PROXY_DOMAIN/$PROXY_IP

@@ -35,4 +35,6 @@ cat "$OUTPUT_FILE"
 echo "Checking syntax of dnsmasq configuration..."
 pihole-FTL dnsmasq-test
 
+pihole g
+
 echo "Configuration update completed successfully."
