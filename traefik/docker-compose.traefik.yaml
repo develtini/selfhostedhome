@@ -11,15 +11,16 @@ services:
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./traefik/static/traefik.yaml:/etc/traefik/traefik.yaml:ro
       - ./traefik/certificates:/etc/traefik/certs:ro
       - ./traefik/dynamic:/etc/traefik/dynamic:ro
       - ./traefik/acme:/etc/traefik/acme
 
     networks:
-      - traefik-network
+      - traefik-network      
     healthcheck:
       test: ["CMD", "traefik", "healthcheck"]
       interval: 30s
       timeout: 10s
       retries: 3
+    restart: unless-stopped

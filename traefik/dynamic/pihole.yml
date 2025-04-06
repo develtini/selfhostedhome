@@ -1,0 +1,7 @@
+http:
+  middlewares:
+    redirect-pihole:
+      redirectRegex:
+        regex: ^/$
+        replacement: /admin
+        permanent: true

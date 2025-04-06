@@ -24,12 +24,11 @@ services:
       - "traefik.http.routers.navidrome-lan.tls.certresolver=letsencrypt-cloudflare"
       - "traefik.http.routers.navidrome-lan.service=navidrome-lan-service"
       - "traefik.http.services.navidrome-lan-service.loadbalancer.server.port=${PORT:-4533}"
-
     volumes:
       - navidrome_data:/data
       - "${MUSIC_DIR}:/music:ro"
     networks:
-      - traefik-network
+      - traefik-network        
     restart: unless-stopped
 
 volumes:
