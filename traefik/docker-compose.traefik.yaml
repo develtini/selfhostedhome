@@ -17,7 +17,10 @@ services:
       - ./traefik/acme:/etc/traefik/acme
 
     networks:
-      - traefik-network      
+      traefik-network:
+        ipv4_address: 172.20.0.2
+    dns:
+      - 172.20.0.3
     healthcheck:
       test: ["CMD", "traefik", "healthcheck"]
       interval: 30s

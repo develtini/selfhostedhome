@@ -136,6 +136,10 @@ cmd-pihole-adlists: ## Update adlists
 cmd-pihole-adlists-clean: ## Disable adlists
 	docker compose --env-file .env --env-file ./pihole/.env -f docker-compose.yaml -f ./pihole/docker-compose.pihole.yaml exec -u root pihole sh -c "/bin/sh /etc/custom.d/02-adlists/clean-adlists.sh"
 
+cmd-pihole-flushdns: ## Flush dns
+	docker compose --env-file .env --env-file ./pihole/.env -f docker-compose.yaml -f ./pihole/docker-compose.pihole.yaml exec -u root pihole sh -c ""
+
+
 cmd-jellyfin-checkhw: ## Check hardware acceleration
 	@echo "Checking QSV and VA-API for Jellyfin..."
 	docker compose --env-file .env --env-file ./services/jellyfin/.env -f docker-compose.yaml -f ./services/jellyfin/docker-compose.jellyfin.yaml exec -it jellyfin /bin/bash -c "/usr/lib/jellyfin-ffmpeg/vainfo"

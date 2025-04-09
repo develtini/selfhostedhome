@@ -20,7 +20,10 @@ services:
       - jellyfin_cache:/cache
       - ${MEDIA_DIR}:/media
     networks:
-      - traefik-network        
+      traefik-network:
+        ipv4_address: 172.20.0.11
+    dns:
+      - 172.20.0.3
     restart: unless-stopped
     devices:
       - ${RENDER_PATH:-/dev/dri/renderD128}:/dev/dri/renderD128

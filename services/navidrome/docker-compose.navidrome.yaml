@@ -28,7 +28,11 @@ services:
       - navidrome_data:/data
       - "${MUSIC_DIR}:/music:ro"
     networks:
-      - traefik-network        
+      traefik-network:
+        ipv4_address: 172.20.0.10
+    dns:
+      - 172.20.0.3
+
     restart: unless-stopped
 
 volumes:

@@ -34,8 +34,14 @@ services:
       - "traefik.http.services.pihole-lan-service.loadbalancer.server.port=${PORT:-80}"
       - "traefik.http.routers.pihole-lan.middlewares=redirect-pihole@file"
     networks:
-      - traefik-network
+      traefik-network:
+        ipv4_address: 172.20.0.3
     restart: unless-stopped
+    # https://docs.pi-hole.net/docker/#note-on-capabilities
+    cap_add:
+      - CAP_NET_BIND_SERVICE
+      - CAP_SYS_NICE
+
 
 volumes:
   pihole_data:
