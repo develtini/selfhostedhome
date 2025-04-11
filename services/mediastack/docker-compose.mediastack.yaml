@@ -1,0 +1,151 @@
+services:
+  # Manage films
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    env_file:
+      - ./services/mediastack/.env.radarr
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+    volumes:
+      - radarr_config:/config
+      - ${MEDIA_MOVIES}:/movies
+      - ${MEDIA_DOWNLOADS}:/downloads
+    labels:
+      - "traefik.enable=true"    
+      # Router para LAN (Let's Encrypt)
+      - "traefik.http.routers.radarr-lan.rule=Host(`${DOMAIN_RADARR}`)"
+      - "traefik.http.routers.radarr-lan.entrypoints=websecure"
+      - "traefik.http.routers.radarr-lan.tls=true"
+      - "traefik.http.routers.radarr-lan.tls.certresolver=letsencrypt-cloudflare"
+      - "traefik.http.routers.radarr-lan.service=radarr-lan-service"
+      - "traefik.http.services.radarr-lan-service.loadbalancer.server.port=${PORT_RADARR:-7878}"    
+    restart: unless-stopped
+    networks:
+      traefik-network:
+        ipv4_address: 172.20.0.21
+    dns:
+      - 172.20.0.3
+
+
+  # Manage TV shows
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    env_file:
+      - ./services/mediastack/.env.sonarr
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+    volumes:
+      - sonarr_config:/config
+      - ${MEDIA_TVSHOWS}:/tv 
+      - ${MEDIA_DOWNLOADS}:/downloads
+    labels:
+      - "traefik.enable=true"    
+      # Router para LAN (Let's Encrypt)
+      - "traefik.http.routers.sonarr-lan.rule=Host(`${DOMAIN_SONARR}`)"
+      - "traefik.http.routers.sonarr-lan.entrypoints=websecure"
+      - "traefik.http.routers.sonarr-lan.tls=true"
+      - "traefik.http.routers.sonarr-lan.tls.certresolver=letsencrypt-cloudflare"
+      - "traefik.http.routers.sonarr-lan.service=sonarr-lan-service"
+      - "traefik.http.services.sonarr-lan-service.loadbalancer.server.port=${PORT_SONARR:-8989}"
+    restart: unless-stopped
+    networks:
+      traefik-network:
+        ipv4_address: 172.20.0.22
+    dns:
+      - 172.20.0.3
+
+
+  # Proxy for index torrent
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: jackett
+    env_file:
+      - ./services/mediastack/.env.jackett
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - UID=${PUID:-1000}
+      - GID=${PGID:-1000}
+    labels:
+      - "traefik.enable=true"    
+      # Router para LAN (Let's Encrypt)
+      - "traefik.http.routers.jackett-lan.rule=Host(`${DOMAIN_JACKETT}`)"
+      - "traefik.http.routers.jackett-lan.entrypoints=websecure"
+      - "traefik.http.routers.jackett-lan.tls=true"
+      - "traefik.http.routers.jackett-lan.tls.certresolver=letsencrypt-cloudflare"
+      - "traefik.http.routers.jackett-lan.service=jackett-lan-service"
+      - "traefik.http.services.jackett-lan-service.loadbalancer.server.port=${PORT_JACKETT:-9117}"
+    volumes:
+      - jackett_config:/config
+      - ${MEDIA_DOWNLOADS}:/downloads
+    restart: unless-stopped
+    networks:
+      traefik-network:
+        ipv4_address: 172.20.0.23
+    dns:
+      - 172.20.0.3
+
+
+  # Torrent client
+  transmission:
+    image: lscr.io/linuxserver/transmission:4.0.5
+    container_name: transmission
+    env_file:
+      - ./services/mediastack/.env.transmission
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - UID=${PUID:-1000}
+      - GID=${PGID:-1000}
+    volumes:
+      - transmission_config:/config
+      - ${MEDIA_DOWNLOADS}:/downloads
+    ports:
+      # - 9091:9091
+      - 51413:51413
+      - 51413:51413/udp
+    labels:
+      - "traefik.enable=true"    
+      # Router para LAN (Let's Encrypt)
+      - "traefik.http.routers.transmission-lan.rule=Host(`${DOMAIN_TRANSMISSION}`)"
+      - "traefik.http.routers.transmission-lan.entrypoints=websecure"
+      - "traefik.http.routers.transmission-lan.tls=true"
+      - "traefik.http.routers.transmission-lan.tls.certresolver=letsencrypt-cloudflare"
+      - "traefik.http.routers.transmission-lan.service=transmission-lan-service"
+      - "traefik.http.services.transmission-lan-service.loadbalancer.server.port=${PORT_TRANSMISSION:-9091}"
+    restart: unless-stopped
+    networks:
+      traefik-network:
+        ipv4_address: 172.20.0.24
+    dns:
+      - 172.20.0.3
+
+  # Proxy solve CAPTCHA
+  flaresolverr:
+    # DockerHub mirror flaresolverr/flaresolverr:latest
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    env_file:
+      - ./services/mediastack/.env.flaresolverr
+    ports:
+      - "${PORT:-8191}:8191"
+    restart: unless-stopped 
+    networks:
+      traefik-network:
+        ipv4_address: 172.20.0.25
+    dns:
+      - 172.20.0.3
+
+volumes:
+  sonarr_config:
+    external: false
+  radarr_config:
+    external: false
+  jackett_config:
+    external: false
+  transmission_config:
+    external: false

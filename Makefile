@@ -4,7 +4,7 @@ ENV_COMMON=--env-file .env --env-file ./traefik/.env --env-file ./pihole/.env
 ACTIVE_SERVICES=$(shell grep ^ACTIVE_SERVICES .env | cut -d '=' -f2 | sed 's/,$$//' | sed 's/,/ /g')
 
 
-.PHONY: help list start start-base start-all-services start-service stop stop-base stop-all-services stop-service restart logs logs-base logs-all-services logs-traefik logs-traefik-access logs-pihole logs-pihole-dns logs-navidrome logs-jellyfin logs-service shell-traefik shell-pihole shell-jellyfin cmd-pihole-localdns cmd-pihole-adlists cmd-pihole-adlists-clean cmd-jellyfin-checkhw
+.PHONY: help list start start-base start-all-services start-service stop stop-base stop-all-services stop-service restart restart-services logs logs-base logs-all-services logs-traefik logs-traefik-access logs-pihole logs-pihole-dns logs-navidrome logs-jellyfin logs-radarr logs-sonarr logs-jackett logs-flaresolverr logs-transmission logs-service shell-traefik shell-pihole shell-jellyfin shell-radarr shell-sonarr shell-jackett shell-flaresolverr shell-transmission cmd-pihole-localdns cmd-pihole-adlists cmd-pihole-adlists-clean cmd-pihole-flushdns cmd-jellyfin-checkhw
 
 
 help: ## Show help for each of the Makefile recipes.
@@ -64,6 +64,14 @@ restart: ## Restart all services (Traefik, Pihole and active services)
 	$(MAKE) stop
 	$(MAKE) start
 
+restart-services: ## Restart all active services
+	@echo "Restarting all active services..."
+	@for SERVICE in $(ACTIVE_SERVICES); do \
+		echo "Restarting $$SERVICE..."; \
+		docker compose --env-file .env --env-file $(SERVICES_DIR)/$$SERVICE/.env -f docker-compose.yaml -f $(SERVICES_DIR)/$$SERVICE/docker-compose.$$SERVICE.yaml restart; \
+	done
+	@echo "All active services restarted successfully."
+
 
 ## Logs Commands ##
 
@@ -108,6 +116,26 @@ logs-jellyfin: ## View logs of Jellyfin
 	@echo "Showing logs for Jellyfin..."
 	docker compose --env-file .env --env-file=./services/jellyfin/.env -f docker-compose.yaml -f ./services/jellyfin/docker-compose.jellyfin.yaml logs -f
 
+logs-radarr: ## View logs of Radarr
+	@echo "Showing logs for Radarr..."
+	docker compose --env-file .env --env-file=./services/mediastack/.env -f docker-compose.yaml -f ./services/mediastack/docker-compose.mediastack.yaml logs radarr -f
+
+logs-sonarr: ## View logs of Sonarr
+	@echo "Showing logs for Sonarr..."
+	docker compose --env-file .env --env-file=./services/mediastack/.env -f docker-compose.yaml -f ./services/mediastack/docker-compose.mediastack.yaml logs sonarr -f
+
+logs-jackett: ## View logs of Jackett
+	@echo "Showing logs for Jackett..."
+	docker compose --env-file .env --env-file=./services/mediastack/.env -f docker-compose.yaml -f ./services/mediastack/docker-compose.mediastack.yaml logs jackett -f
+
+logs-flaresolverr: ## View logs of Flaresolverr
+	@echo "Showing logs for Flaresolverr..."
+	docker compose --env-file .env --env-file=./services/mediastack/.env -f docker-compose.yaml -f ./services/mediastack/docker-compose.mediastack.yaml logs flaresolverr -f
+
+logs-transmission: ## View logs of Transmission
+	@echo "Showing logs for Transmission..."
+	docker compose --env-file .env --env-file=./services/mediastack/.env -f docker-compose.yaml -f ./services/mediastack/docker-compose.mediastack.yaml logs transmission -f
+
 logs-service: ## View logs of a specific service (make logs-service SERVICE=service_name)
 	@echo "Showing logs for $(SERVICE)..."
 	docker compose --env-file .env -f docker-compose.yaml -f $(SERVICES_DIR)/$(SERVICE)/docker-compose.$(SERVICE).yaml logs -f
@@ -125,6 +153,21 @@ shell-pihole: ## Open a shell in the Pihole container
 shell-jellyfin: ## Open a shell in the Jellyfin container
 	docker compose --env-file .env --env-file ./services/jellyfin/.env -f docker-compose.yaml -f ./services/jellyfin/docker-compose.jellyfin.yaml exec -it jellyfin /bin/bash
 
+shell-radarr: ## Open a shell in the Radarr container
+	docker compose --env-file .env --env-file ./services/mediastack/.env -f docker-compose.yaml -f ./services/mediastack/docker-compose.mediastack.yaml exec -it radarr /bin/bash
+
+shell-sonarr: ## Open a shell in the Sonarr container
+	docker compose --env-file .env --env-file ./services/mediastack/.env -f docker-compose.yaml -f ./services/mediastack/docker-compose.mediastack.yaml exec -it sonarr /bin/bash
+
+shell-jackett: ## Open a shell in the Jackett container
+	docker compose --env-file .env --env-file ./services/mediastack/.env -f docker-compose.yaml -f ./services/mediastack/docker-compose.mediastack.yaml exec -it jackett /bin/bash
+
+shell-flaresolverr: ## Open a shell in the Flaresolverr container
+	docker compose --env-file .env --env-file ./services/mediastack/.env -f docker-compose.yaml -f ./services/mediastack/docker-compose.mediastack.yaml exec -it flaresolverr /bin/bash
+
+shell-transmission: ## Open a shell in the Transmission container
+	docker compose --env-file .env --env-file ./services/mediastack/.env -f docker-compose.yaml -f ./services/mediastack/docker-compose.mediastack.yaml exec -it transmission /bin/bash
+
 ## Service Commands ##
 
 cmd-pihole-localdns: ## Update local DNS records
@@ -138,7 +181,6 @@ cmd-pihole-adlists-clean: ## Disable adlists
 
 cmd-pihole-flushdns: ## Flush dns
 	docker compose --env-file .env --env-file ./pihole/.env -f docker-compose.yaml -f ./pihole/docker-compose.pihole.yaml exec -u root pihole sh -c ""
-
 
 cmd-jellyfin-checkhw: ## Check hardware acceleration
 	@echo "Checking QSV and VA-API for Jellyfin..."

@@ -5,7 +5,9 @@
 
 # Environment
 .env
-./**/.env
+**/.env.*
+!**/.env.sample
+!**/.env.*.sample
 
 # System / IDE
 .DS_Store
