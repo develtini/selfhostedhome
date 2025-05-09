@@ -1,0 +1,31 @@
+services:
+  n8n:
+    container_name: n8n
+    image: docker.n8n.io/n8nio/n8n
+    env_file:
+      - ./services/n8n/.env
+    environment:
+      - GENERIC_TIMEZONE=${TZ:-Etc/UTC}
+    labels:
+      - "traefik.enable=true"    
+
+      # Router para LAN (Let's Encrypt)
+      - "traefik.http.routers.n8n-lan.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.n8n-lan.entrypoints=websecure"
+      - "traefik.http.routers.n8n-lan.tls=true"
+      - "traefik.http.routers.n8n-lan.tls.certresolver=letsencrypt-cloudflare"
+      - "traefik.http.routers.n8n-lan.service=n8n-lan-service"
+      - "traefik.http.services.n8n-lan-service.loadbalancer.server.port=${PORT:-5678}"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./services/n8n/local-files:/files
+    networks:
+      traefik-network:
+        ipv4_address: 172.20.0.42
+    dns:
+      - 172.20.0.3
+    restart: unless-stopped
+
+volumes:
+  n8n_data:
+    external: false
