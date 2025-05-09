@@ -1,0 +1,32 @@
+services:
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:latest
+    container_name: mealie
+    env_file:
+      - ./services/mealie/.env
+    environment:    
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TZ:-Etc/UTC}
+      BASE_URL: ${DOMAIN:-}
+    volumes:
+      - mealie_data:/app/data/
+    labels:
+      - "traefik.enable=true"
+      # Router para LAN (Let's Encrypt)
+      - "traefik.http.routers.mealie-lan.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.mealie-lan.entrypoints=websecure"
+      - "traefik.http.routers.mealie-lan.tls=true"
+      - "traefik.http.routers.mealie-lan.tls.certresolver=letsencrypt-cloudflare"
+      - "traefik.http.routers.mealie-lan.service=mealie-lan-service"
+      - "traefik.http.services.mealie-lan-service.loadbalancer.server.port=${PORT:-9925}"
+    restart: unless-stopped
+    networks:
+      traefik-network:
+        ipv4_address: 172.20.0.41
+    dns:
+      - 172.20.0.3
+
+volumes:
+  mealie_data:
+    external: false
