@@ -11,7 +11,8 @@ services:
     volumes:
       - radarr_config:/config
       - ${MEDIA_MOVIES}:/movies
-      - ${MEDIA_DOWNLOADS}:/downloads
+      - transmission_downloads:/downloads
+      - rdtclient_downloads:/downloads_rdtclient
     labels:
       - "traefik.enable=true"    
       # Router para LAN (Let's Encrypt)
@@ -41,7 +42,8 @@ services:
     volumes:
       - sonarr_config:/config
       - ${MEDIA_TVSHOWS}:/tv 
-      - ${MEDIA_DOWNLOADS}:/downloads
+      - transmission_downloads:/downloads
+      - rdtclient_downloads:/downloads_rdtclient
     labels:
       - "traefik.enable=true"    
       # Router para LAN (Let's Encrypt)
@@ -81,7 +83,7 @@ services:
       - "traefik.http.services.jackett-lan-service.loadbalancer.server.port=${PORT_JACKETT:-9117}"
     volumes:
       - jackett_config:/config
-      - ${MEDIA_DOWNLOADS}:/downloads
+      - transmission_downloads:/downloads
     restart: unless-stopped
     networks:
       traefik-network:
@@ -103,7 +105,7 @@ services:
       - GID=${PGID:-1000}
     volumes:
       - transmission_config:/config
-      - ${MEDIA_DOWNLOADS}:/downloads
+      - transmission_downloads:/downloads
     ports:
       # - 9091:9091
       - 51413:51413
@@ -139,8 +141,68 @@ services:
         ipv4_address: 172.20.0.25
     dns:
       - 172.20.0.3
+  
+  # Bazarr
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr  
+    env_file:
+      - ./services/mediastack/.env.bazarr
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
+    volumes:
+      - ${MEDIA_TVSHOWS}:/tv
+      - ${MEDIA_MOVIES}:/movies
+      - bazarr_config:/config
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"    
+      # Router para LAN (Let's Encrypt)
+      - "traefik.http.routers.bazarr-lan.rule=Host(`${DOMAIN_BAZARR}`)"
+      - "traefik.http.routers.bazarr-lan.entrypoints=websecure"
+      - "traefik.http.routers.bazarr-lan.tls=true"
+      - "traefik.http.routers.bazarr-lan.tls.certresolver=letsencrypt-cloudflare"
+      - "traefik.http.routers.bazarr-lan.service=bazarr-lan-service"
+      - "traefik.http.services.bazarr-lan-service.loadbalancer.server.port=${PORT_BAZARR:-6767}"
+    networks:
+      traefik-network:
+        ipv4_address: 172.20.0.26
+    dns:
+      - 172.20.0.3
+
+  # RDTClient
+  rdtclient:
+    image: rogerfar/rdtclient
+    container_name: rdtclient
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
+    volumes:
+      - rdtclient_config:/data/db
+      - rdtclient_downloads:/data/downloads
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"    
+      # Router para LAN (Let's Encrypt)
+      - "traefik.http.routers.rdtclient-lan.rule=Host(`${DOMAIN_RDTCLIENT}`)"
+      - "traefik.http.routers.rdtclient-lan.entrypoints=websecure"
+      - "traefik.http.routers.rdtclient-lan.tls=true"
+      - "traefik.http.routers.rdtclient-lan.tls.certresolver=letsencrypt-cloudflare"
+      - "traefik.http.routers.rdtclient-lan.service=rdtclient-lan-service"
+      - "traefik.http.services.rdtclient-lan-service.loadbalancer.server.port=${PORT_RDTCLIENT:-6500}"
+    networks:
+      traefik-network:
+        ipv4_address: 172.20.0.27
+    dns:
+      - 172.20.0.3
+
 
 volumes:
+  transmission_downloads:
+    external: false
   sonarr_config:
     external: false
   radarr_config:
@@ -148,4 +210,10 @@ volumes:
   jackett_config:
     external: false
   transmission_config:
+    external: false
+  bazarr_config:
+    external: false
+  rdtclient_config:
+    external: false
+  rdtclient_downloads:
     external: false
