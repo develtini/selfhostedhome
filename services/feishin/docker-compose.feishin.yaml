@@ -1,0 +1,26 @@
+services:
+  feishin:
+      container_name: feishin
+      image: ghcr.io/jeffvli/feishin:latest      
+      env_file:
+        - ./services/feishin/.env
+      environment:
+          - PUID=${PUID:-1000}
+          - PGID=${PGID:-1000}
+          - TZ=${TZ:-Etc/UTC}
+      labels:
+        - "traefik.enable=true"
+
+        # Router para LAN (Let's Encrypt)
+        - "traefik.http.routers.feishin-lan.rule=Host(`${DOMAIN}`)"
+        - "traefik.http.routers.feishin-lan.entrypoints=websecure"
+        - "traefik.http.routers.feishin-lan.tls=true"
+        - "traefik.http.routers.feishin-lan.tls.certresolver=letsencrypt-cloudflare"
+        - "traefik.http.routers.feishin-lan.service=feishin-lan-service"
+        - "traefik.http.services.feishin-lan-service.loadbalancer.server.port=${PORT:-9180}"
+      networks:
+        traefik-network:
+          ipv4_address: 172.20.0.12
+      dns:
+        - 172.20.0.3
+      restart: unless-stopped
