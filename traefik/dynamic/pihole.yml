@@ -5,3 +5,7 @@ http:
         regex: ^/$
         replacement: /admin
         permanent: true
+
+  serversTransports:
+    pihole-doh-transport:
+      insecureSkipVerify: true

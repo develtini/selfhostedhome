@@ -2,8 +2,6 @@ services:
   navidrome:
     container_name: navidrome
     image: deluan/navidrome:latest    
-    ports:
-      - "4533:${PORT:-4533}"
     env_file:
       - ./services/navidrome/.env
     labels:

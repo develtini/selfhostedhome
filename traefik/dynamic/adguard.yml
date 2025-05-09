@@ -1,0 +1,4 @@
+http:
+  serversTransports:
+    adguard-doh-transport:
+      insecureSkipVerify: true

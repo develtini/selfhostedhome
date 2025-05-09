@@ -20,7 +20,7 @@ services:
       traefik-network:
         ipv4_address: 172.20.0.2
     dns:
-      - 172.20.0.3
+      - 1.1.1.1
     healthcheck:
       test: ["CMD", "traefik", "healthcheck"]
       interval: 30s
