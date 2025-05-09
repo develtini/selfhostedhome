@@ -1,0 +1,81 @@
+services:
+  pihole:
+    container_name: pihole
+    build:
+      context: ./pihole
+      dockerfile: Dockerfile
+    env_file:
+      - ./net/pihole/.env
+    environment:
+      WEB_PORT: ${PORT:-80}
+      PIHOLE_UID: ${UID:-1000}
+      PIHOLE_GID: ${GID:-1000}
+      # TODO Remove
+      # DNSMASQ_LISTENING: all
+  
+    ports:
+      - "53:53/tcp" # DNS TCP
+      - "53:53/udp" # DNS UDP
+      - "853:853/tcp" # DoT (DNS over TLS)
+    expose:
+      - "5443" # DoH (DNS over HTTPS)
+    dns:
+      - 127.0.0.1
+    volumes:
+      - pihole_data:/etc/pihole
+      - dnsmasq_data:/etc/dnsmasq.d
+      - ./pihole/static-entries:/etc/custom.d/01-static-entries:ro
+      - ./pihole/adlists:/etc/custom.d/02-adlists:ro
+      - ./pihole/cert-extractor:/etc/custom.d/03-cert-extractor:ro
+      - ./pihole/dnsdist/dnsdist.conf:/etc/dnsdist.conf:ro
+      - ./traefik/acme:/certs
+    labels:
+      - "traefik.enable=true"
+
+      # Router para LAN (Let's Encrypt)
+      - "traefik.http.routers.pihole-lan.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.pihole-lan.entrypoints=websecure"
+      - "traefik.http.routers.pihole-lan.tls=true"
+      - "traefik.http.routers.pihole-lan.tls.certresolver=letsencrypt-cloudflare"
+      - "traefik.http.routers.pihole-lan.service=pihole-lan-service"
+      - "traefik.http.services.pihole-lan-service.loadbalancer.server.port=${PORT:-80}"
+      - "traefik.http.routers.pihole-lan.middlewares=redirect-pihole@file"
+
+      # Router para LAN (DoH)
+      - "traefik.http.routers.pihole-lan-doh.rule=Host(`${DOMAIN_DOH}`)"
+      - "traefik.http.routers.pihole-lan-doh.entrypoints=websecure"
+      - "traefik.http.routers.pihole-lan-doh.tls=true"
+      - "traefik.http.routers.pihole-lan-doh.tls.certresolver=letsencrypt-cloudflare"
+      - "traefik.http.routers.pihole-lan-doh.service=pihole-lan-doh-service"
+      - "traefik.http.services.pihole-lan-doh-service.loadbalancer.server.port=5443"
+      - "traefik.http.services.pihole-lan-doh-service.loadbalancer.server.scheme=https"
+      - "traefik.http.services.pihole-lan-doh-service.loadbalancer.serversTransport=pihole-doh-transport@file"
+
+      # Router para LAN (DoH) Well-known redirect
+      - "traefik.http.routers.wellknown.rule=Host(`${DOMAIN_DOH}`) && PathPrefix(`/.well-known/dns-query`)"
+      - "traefik.http.routers.wellknown.entrypoints=websecure"
+      - "traefik.http.routers.wellknown.tls=true"
+      - "traefik.http.routers.wellknown.service=wellknown-doh-service"
+      - "traefik.http.routers.wellknown.middlewares=wellknown-redirect@docker"
+      - "traefik.http.middlewares.wellknown-redirect.redirectRegex.regex=^https://(.*)/.well-known/dns-query$$"
+      - "traefik.http.middlewares.wellknown-redirect.redirectRegex.replacement=https://$${1}/dns-query"
+      - "traefik.http.middlewares.wellknown-redirect.redirectRegex.permanent=true"
+      - "traefik.http.services.wellknown-doh-service.loadbalancer.server.port=5443"
+      - "traefik.http.services.wellknown-doh-service.loadbalancer.server.scheme=https"      
+
+    networks:
+      traefik-network:
+        ipv4_address: 172.20.0.3
+    restart: unless-stopped
+    # https://docs.pi-hole.net/docker/#note-on-capabilities
+    cap_add:
+      - CAP_NET_BIND_SERVICE
+      - CAP_SYS_NICE
+
+volumes:
+  pihole_data:
+    external: false
+  dnsmasq_data:
+    external: false
+    
+

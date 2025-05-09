@@ -1,0 +1,47 @@
+services:
+  adguard:
+    image: adguard/adguardhome:latest
+    container_name: adguardhome
+    env_file:
+      - ./net/adguard/.env
+    # user: "${UID:-1000}:${GID:-1000}"
+    environment:
+      - TZ=${TZ:-Etc/UTC}
+    ports:
+      - "53:53/tcp"     # DNS clásico
+      - "53:53/udp"
+      - "3000:${ADGUARD_SETUP_PORT:-}/tcp"
+      - "853:853/tcp"   # DNS-over-TLS (DoT)
+    volumes:
+      - adguard_work:/opt/adguardhome/work
+      - ./net/adguard/conf:/opt/adguardhome/conf
+      - ./net/adguard/cert-extractor:/etc/custom.d/01-cert-extractor:ro
+      - ./traefik/acme:/certs
+
+    labels:
+      - "traefik.enable=true"
+
+      # DoH
+      - "traefik.http.routers.adguard-doh.rule=Host(`${DOMAIN}`) && Path(`/dns-query`)"
+      - "traefik.http.routers.adguard-doh.entrypoints=websecure"
+      - "traefik.http.routers.adguard-doh.tls=true"
+      - "traefik.http.routers.adguard-doh.service=adguard-doh-service"
+      - "traefik.http.services.adguard-doh-service.loadbalancer.server.port=443"
+      - "traefik.http.services.adguard-doh-service.loadbalancer.server.scheme=https"
+      - "traefik.http.services.adguard-doh-service.loadbalancer.serversTransport=adguard-doh-transport@file"
+
+      # Router para LAN (Let's Encrypt)
+      - "traefik.http.routers.adguard-lan.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.adguard-lan.entrypoints=websecure"
+      - "traefik.http.routers.adguard-lan.tls=true"
+      - "traefik.http.routers.adguard-lan.tls.certresolver=letsencrypt-cloudflare"
+      - "traefik.http.routers.adguard-lan.service=adguard-lan-service"
+      - "traefik.http.services.adguard-lan-service.loadbalancer.server.port=${PORT:-80}"
+    restart: unless-stopped
+    networks:
+      traefik-network:
+        ipv4_address: 172.20.0.3
+
+volumes:
+  adguard_work:
+    external: false

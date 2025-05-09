@@ -1,0 +1,16 @@
+services:
+  dockerproxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:latest
+    container_name: dockerproxy
+    env_file:
+      - ./net/dockerproxy/.env
+    ports:
+      - 127.0.0.1:2375:2375
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Mounted as read-only
+    restart: unless-stopped
+    networks:
+      traefik-network:
+        ipv4_address: 172.20.0.4
+    dns:
+      - 172.20.0.3
