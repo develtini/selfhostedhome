@@ -1,7 +1,7 @@
 # Self-Hosted Home Server
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![License](https://img.shields.io/badge/license-private-red.svg)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 A Docker Compose setup for managing self-hosted services in a private home server environment, using Traefik as reverse proxy.
 
